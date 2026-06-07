@@ -43,6 +43,9 @@ from freemocap.gui.qt.utilities.save_and_load_gui_state import (
     load_gui_state,
     save_gui_state,
 )
+from freemocap.gui.qt.utilities.skellycam_detection_patch import (
+    allow_slow_or_static_cameras_in_skellycam_detection,
+)
 from freemocap.gui.qt.utilities.update_most_recent_recording_toml import (
     update_most_recent_recording_toml,
 )
@@ -99,6 +102,7 @@ class MainWindow(QMainWindow):
         super().__init__(parent=parent)
         self._log_view_widget = LogViewWidget(parent=self)  # start this first so it will grab the setup logs
         logger.info("Initializing FreeMoCap MainWindow")
+        allow_slow_or_static_cameras_in_skellycam_detection()
 
         self.setMinimumSize(1280, 720)
         self.setWindowIcon(QIcon(PATH_TO_FREEMOCAP_LOGO_SVG))

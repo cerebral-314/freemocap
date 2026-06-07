@@ -2085,8 +2085,32 @@ class CameraGroup:
 
             if init_intrinsics:
                 objp, imgp = board.get_all_calibration_points(rows)
-                mixed = [(o, i) for (o, i) in zip(objp, imgp) if len(o) >= 7]
-                assert len(objp) != 0 and len(imgp) != 0, "No Charuco board points detected"
+                minimum_corners_per_frame = min(7, board.total_size)
+                detected_corner_counts = [len(points) for points in objp]
+                mixed = [
+                    (object_points, image_points)
+                    for (object_points, image_points) in zip(objp, imgp)
+                    if len(object_points) >= minimum_corners_per_frame
+                ]
+
+                if len(objp) == 0 or len(imgp) == 0:
+                    raise AssertionError(
+                        "No Charuco board points detected for camera "
+                        f"{camera.get_name()}. The selected board is {board.squaresX}x{board.squaresY} "
+                        f"({board.total_size} corners)."
+                    )
+
+                if len(mixed) == 0:
+                    maximum_detected_corners = max(detected_corner_counts, default=0)
+                    raise AssertionError(
+                        "Not enough Charuco board points detected for camera "
+                        f"{camera.get_name()}. The selected board is {board.squaresX}x{board.squaresY} "
+                        f"({board.total_size} corners); calibration needs at least "
+                        f"{minimum_corners_per_frame} corners in one frame for this camera, but the best frame had "
+                        f"{maximum_detected_corners}. Detected corner counts per accepted frame candidate: "
+                        f"{detected_corner_counts[:20]}"
+                    )
+
                 objp, imgp = zip(*mixed)
                 matrix = cv2.initCameraMatrix2D(objp, imgp, tuple(size))
                 camera.set_camera_matrix(matrix)

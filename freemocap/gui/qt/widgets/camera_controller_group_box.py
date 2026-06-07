@@ -30,6 +30,10 @@ from freemocap.system.paths_and_filenames.path_getters import (
 CALIBRATION_RECORDING_BUTTON_TEXT = "\U0001f534 \U0001f4d0 Start Calibration Recording"
 MOCAP_RECORDING_BUTTON_TEXT = f"{SKULL_EMOJI_STRING} {SPARKLES_EMOJI_STRING} Start Motion Capture Recording"
 CALIBRATION_DOCS_LINK = "https://freemocap.github.io/documentation/multi-camera-calibration.html"
+SKELLYCAM_CHARUCO_BOARD_NAMES_BY_FREEMOCAP_NAME = {
+    "7x5 Charuco": "Full Charuco (7x5)",
+    "5x3 Charuco": "Mini Charuco (5x3)",
+}
 logger = logging.getLogger(__name__)
 
 
@@ -66,6 +70,7 @@ class CameraControllerGroupBox(QGroupBox):
         self._annotate_charuco_checkbox.toggled.connect(self._on_annotate_charuco_checkbox_changed)
         self._mocap_videos_radio_button.toggled.connect(self._set_record_button_text)
         self._skellycam_widget.cameras_connected_signal.connect(lambda: self._start_recording_button.setEnabled(True))
+        self._skellycam_widget.cameras_connected_signal.connect(self._apply_charuco_options_to_skellycam_worker)
         self._stop_recording_button.clicked.connect(self._set_record_button_text)
 
         self._auto_process_videos_checkbox.toggled.connect(self._on_auto_process_videos_checkbox_changed)
@@ -325,6 +330,7 @@ class CameraControllerGroupBox(QGroupBox):
         self._skellycam_widget.annotate_images = self._annotate_charuco_checkbox.isChecked()
         self.gui_state.annotate_charuco_images = self._annotate_charuco_checkbox.isChecked()
         save_gui_state(gui_state=self.gui_state, file_pathstring=get_gui_state_json_path())
+        self._apply_charuco_options_to_skellycam_worker()
 
     def _on_use_charuco_groundplane_checkbox_changed(self) -> None:
         self.gui_state.use_charuco_as_groundplane = self._use_charuco_as_groundplane_checkbox.isChecked()
@@ -355,6 +361,7 @@ class CameraControllerGroupBox(QGroupBox):
         selected_board_name = self._board_dropdown.currentText()
         self.gui_state.charuco_board_name = selected_board_name
         save_gui_state(gui_state=self.gui_state, file_pathstring=get_gui_state_json_path())
+        self._apply_charuco_options_to_skellycam_worker()
         self.controller_group_box_calibration_updated.emit()
 
     @Slot()
@@ -363,3 +370,17 @@ class CameraControllerGroupBox(QGroupBox):
         self._board_dropdown.setCurrentText(self.gui_state.charuco_board_name)
         self._charuco_square_size_line_edit.setText(str(self.gui_state.charuco_square_size))
         self._use_charuco_as_groundplane_checkbox.setChecked(self.gui_state.use_charuco_as_groundplane)
+        self._apply_charuco_options_to_skellycam_worker()
+
+    def _apply_charuco_options_to_skellycam_worker(self) -> None:
+        cam_group_frame_worker = getattr(self._skellycam_widget, "_cam_group_frame_worker", None)
+        if cam_group_frame_worker is None:
+            return
+
+        cam_group_frame_worker.annotate_images = self._annotate_charuco_checkbox.isChecked()
+        skellycam_board_name = SKELLYCAM_CHARUCO_BOARD_NAMES_BY_FREEMOCAP_NAME.get(self.charuco_board_name)
+        if skellycam_board_name is None:
+            logger.warning(f"Could not map FreeMoCap Charuco board name to skellycam: {self.charuco_board_name}")
+            return
+
+        cam_group_frame_worker.charuco_board = skellycam_board_name
