@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://freemocap.org/schemas/mocapcam/depth_observations.schema.json",
+  "title": "MocapCam Depth Observation Manifest",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "session_id",
+      "device_id",
+      "depth_frame_index",
+      "depth_time_ns",
+      "depth_width",
+      "depth_height",
+      "depth_encoding"
+    ],
+    "properties": {
+      "session_id": { "type": "string" },
+      "device_id": { "type": "string" },
+      "depth_frame_index": { "type": "integer", "minimum": 0 },
+      "rgb_frame_index": { "type": ["integer", "null"], "minimum": 0 },
+      "depth_time_ns": { "type": "integer" },
+      "depth_width": { "type": "integer", "minimum": 1 },
+      "depth_height": { "type": "integer", "minimum": 1 },
+      "depth_units": { "const": "meters" },
+      "depth_encoding": { "enum": ["uint16_mm_little_endian"] },
+      "confidence_encoding": { "type": ["string", "null"] },
+      "intrinsics_reference": { "type": "string" },
+      "depth_chunk_id": { "type": "string" },
+      "depth_file": { "type": "string" }
+    }
+  }
+}

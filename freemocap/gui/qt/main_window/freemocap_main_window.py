@@ -65,6 +65,7 @@ from freemocap.gui.qt.widgets.home_widget import (
 )
 from freemocap.gui.qt.widgets.import_videos_wizard import ImportVideosWizard
 from freemocap.gui.qt.widgets.log_view_widget import LogViewWidget
+from freemocap.gui.qt.widgets.mocapcam_capture_widget import MocapCamCaptureWidget
 from freemocap.gui.qt.widgets.opencv_conflict_dialog import OpencvConflictDialog
 from freemocap.gui.qt.widgets.release_notes_dialogs.tabbed_release_notes_dialog import TabbedReleaseNotesDialog
 from freemocap.gui.qt.widgets.set_data_folder_dialog import SetDataFolderDialog
@@ -242,6 +243,13 @@ class MainWindow(QMainWindow):
         )
 
         self._skelly_viewer_widget = SkellyViewer()
+        self._mocapcam_capture_widget = MocapCamCaptureWidget(
+            recording_root_path=Path(get_recording_session_folder_path()),
+            parent=self,
+        )
+        self._mocapcam_capture_widget.recording_finished_signal.connect(
+            self._handle_mocapcam_recording_finished
+        )
 
         center_tab_widget = CentralTabWidget(
             parent=self,
@@ -251,6 +259,7 @@ class MainWindow(QMainWindow):
             skelly_viewer_widget=self._skelly_viewer_widget,
             directory_view_widget=self._directory_view_widget,
             active_recording_info_widget=self._active_recording_info_widget,
+            mocapcam_capture_widget=self._mocapcam_capture_widget,
         )
 
         center_tab_widget.set_welcome_tab_enabled(True)
@@ -258,6 +267,12 @@ class MainWindow(QMainWindow):
         center_tab_widget.set_visualize_data_tab_enabled(True)
 
         return center_tab_widget
+
+    @Slot(str)
+    def _handle_mocapcam_recording_finished(self, recording_path: str) -> None:
+        logger.info(f"MocapCam recording finished: {recording_path}")
+        self._active_recording_info_widget.set_active_recording(recording_folder_path=recording_path)
+        self._directory_view_widget.expand_directory_to_path(recording_path)
 
     def _create_directory_view_widget(self):
         return DirectoryViewWidget(

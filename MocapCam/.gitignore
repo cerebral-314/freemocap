@@ -1,0 +1,5 @@
+xtool/
+recordings/
+desktop/recordings/
+**/__pycache__/
+**/.pytest_cache/

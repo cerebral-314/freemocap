@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://freemocap.org/schemas/mocapcam/sync_report.schema.json",
+  "title": "MocapCam Device Sync Report",
+  "type": "object",
+  "required": ["session_id", "devices"],
+  "properties": {
+    "session_id": { "type": "string" },
+    "devices": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["sample_count", "estimated_offset_ms", "estimated_drift_ppm"],
+        "properties": {
+          "sample_count": { "type": "integer", "minimum": 0 },
+          "estimated_offset_ms": { "type": "number" },
+          "estimated_drift_ppm": { "type": "number" },
+          "median_round_trip_latency_ms": { "type": "number", "minimum": 0 },
+          "rgb_frames_received": { "type": "integer", "minimum": 0 },
+          "depth_frames_received": { "type": "integer", "minimum": 0 },
+          "final_alignment_error_ms": { "type": ["number", "null"] }
+        }
+      }
+    }
+  }
+}

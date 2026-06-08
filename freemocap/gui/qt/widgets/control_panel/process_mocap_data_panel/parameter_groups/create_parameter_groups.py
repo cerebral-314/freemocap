@@ -8,6 +8,7 @@ from freemocap.data_layer.recording_models.post_processing_parameter_models impo
     AniposeTriangulate3DParametersModel,
     PostProcessingParametersModel,
     ButterworthFilterParametersModel,
+    DepthFusionParametersModel,
 )
 
 BUTTERWORTH_ORDER = "Order"
@@ -31,6 +32,26 @@ OUTLIER_REJECTION_TARGET_REPROJECTION_ERROR = "Target Reprojection Error"
 ANIPOSE_CONFIDENCE_CUTOFF = "Confidence Threshold Cut-off"
 
 FLATTEN_SINGLE_CAMERA_DATA = "Flatten Single Camera Data (Recommended)"
+
+DEPTH_FUSION_TREE_NAME = "RGB-D Depth Fusion"
+
+USE_DEPTH_FUSION = "Use RGB-D Depth Fusion?"
+
+DEPTH_WEIGHT = "Depth Weight"
+
+MAX_DEPTH_JOINT_DISTANCE_M = "Max Depth/Joint Distance (m)"
+
+DEPTH_PATCH_RADIUS_PX = "Depth Patch Radius (px)"
+
+MIN_VALID_DEPTH_PIXELS = "Min Valid Depth Pixels"
+
+REJECT_DEPTH_EDGES = "Reject Depth Edges"
+
+USE_DEPTH_FOR_OCCLUSION_REASONING = "Use Depth for Occlusion Reasoning"
+
+SAVE_RGBD_DIAGNOSTICS = "Save RGB-D Diagnostics"
+
+REPLACE_TRIANGULATED_WITH_REFINED = "Replace Triangulated Skeleton with RGB-D Refined Skeleton"
 
 ANIPOSE_TREE_NAME = "Anipose Triangulation"
 
@@ -238,6 +259,84 @@ def create_post_processing_parameter_group(
     )
 
 
+def create_depth_fusion_parameter_group(
+        parameter_model: DepthFusionParametersModel = None,
+) -> Parameter:
+    if parameter_model is None:
+        parameter_model = DepthFusionParametersModel()
+
+    return Parameter.create(
+        name=DEPTH_FUSION_TREE_NAME,
+        type="group",
+        expanded=False,
+        children=[
+            dict(
+                name=USE_DEPTH_FUSION,
+                type="bool",
+                value=parameter_model.use_depth_fusion,
+                tip="Use output_data/raw_data/rgbd_depth_observations.npz to refine normal triangulated 3D data.",
+            ),
+            dict(
+                name=DEPTH_WEIGHT,
+                type="float",
+                value=parameter_model.depth_weight,
+                limits=(0.0, 100.0),
+                step=0.1,
+                tip="Relative weight for accepted LiDAR/depth observations during RGB-D fusion.",
+            ),
+            dict(
+                name=MAX_DEPTH_JOINT_DISTANCE_M,
+                type="float",
+                value=parameter_model.max_depth_joint_distance_m,
+                limits=(0.0, 10.0),
+                step=0.01,
+                tip="Reject a depth observation if it is farther than this from the triangulated joint.",
+            ),
+            dict(
+                name=DEPTH_PATCH_RADIUS_PX,
+                type="int",
+                value=parameter_model.depth_patch_radius_px,
+                limits=(0, 50),
+                step=1,
+                tip="Radius of the depth patch sampled around each 2D landmark.",
+            ),
+            dict(
+                name=MIN_VALID_DEPTH_PIXELS,
+                type="int",
+                value=parameter_model.min_valid_depth_pixels,
+                limits=(1, 1000),
+                step=1,
+                tip="Minimum valid pixels required in the sampled depth patch.",
+            ),
+            dict(
+                name=REJECT_DEPTH_EDGES,
+                type="bool",
+                value=parameter_model.reject_depth_edges,
+                tip="Reserved for edge-aware depth rejection in the RGB-D importer.",
+            ),
+            dict(
+                name=USE_DEPTH_FOR_OCCLUSION_REASONING,
+                type="bool",
+                value=parameter_model.use_depth_for_occlusion_reasoning,
+                tip="Reserved for depth-based view confidence and occlusion scoring.",
+            ),
+            dict(
+                name=SAVE_RGBD_DIAGNOSTICS,
+                type="bool",
+                value=parameter_model.save_rgbd_diagnostics,
+                tip="Save accepted/rejected depth point diagnostics next to the refined 3D data.",
+            ),
+            dict(
+                name=REPLACE_TRIANGULATED_WITH_REFINED,
+                type="bool",
+                value=parameter_model.replace_triangulated_with_refined,
+                tip="Use the RGB-D refined skeleton as the 3D output passed to later processing steps.",
+            ),
+        ],
+        tip="Depth-aware refinement for MocapCam RGB-D recordings.",
+    )
+
+
 def extract_parameter_model_from_parameter_tree(
         parameter_object: Parameter,
 ) -> ProcessingParameterModel:
@@ -267,6 +366,17 @@ def extract_parameter_model_from_parameter_tree(
             maximum_cameras_to_drop=parameter_values_dictionary[OUTLIER_REJECTION_MAXIMUM_CAMERAS_TO_DROP],
             target_reprojection_error=parameter_values_dictionary[OUTLIER_REJECTION_TARGET_REPROJECTION_ERROR],
             run_3d_triangulation=parameter_values_dictionary[RUN_3D_TRIANGULATION_NAME],
+        ),
+        depth_fusion_parameters_model=DepthFusionParametersModel(
+            use_depth_fusion=parameter_values_dictionary[USE_DEPTH_FUSION],
+            depth_weight=parameter_values_dictionary[DEPTH_WEIGHT],
+            max_depth_joint_distance_m=parameter_values_dictionary[MAX_DEPTH_JOINT_DISTANCE_M],
+            depth_patch_radius_px=parameter_values_dictionary[DEPTH_PATCH_RADIUS_PX],
+            min_valid_depth_pixels=parameter_values_dictionary[MIN_VALID_DEPTH_PIXELS],
+            reject_depth_edges=parameter_values_dictionary[REJECT_DEPTH_EDGES],
+            use_depth_for_occlusion_reasoning=parameter_values_dictionary[USE_DEPTH_FOR_OCCLUSION_REASONING],
+            save_rgbd_diagnostics=parameter_values_dictionary[SAVE_RGBD_DIAGNOSTICS],
+            replace_triangulated_with_refined=parameter_values_dictionary[REPLACE_TRIANGULATED_WITH_REFINED],
         ),
         post_processing_parameters_model=PostProcessingParametersModel(
             framerate=parameter_values_dictionary[POST_PROCESSING_FRAME_RATE],

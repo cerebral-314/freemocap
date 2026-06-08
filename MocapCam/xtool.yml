@@ -1,0 +1,3 @@
+version: 1
+bundleID: org.freemocap.MocapCam
+infoPath: MocapCam/Info.plist

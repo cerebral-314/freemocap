@@ -22,6 +22,18 @@ class AniposeTriangulate3DParametersModel(BaseModel):
     flatten_single_camera_data: bool = True
 
 
+class DepthFusionParametersModel(BaseModel):
+    use_depth_fusion: bool = False
+    depth_weight: float = 1.0
+    max_depth_joint_distance_m: float = 0.25
+    depth_patch_radius_px: int = 3
+    min_valid_depth_pixels: int = 5
+    reject_depth_edges: bool = True
+    use_depth_for_occlusion_reasoning: bool = True
+    save_rgbd_diagnostics: bool = True
+    replace_triangulated_with_refined: bool = True
+
+
 class ButterworthFilterParametersModel(BaseModel):
     sampling_rate: float = 30
     cutoff_frequency: float = 7
@@ -40,5 +52,6 @@ class ProcessingParameterModel(BaseModel):
     recording_info_model: RecordingInfoModel = None
     tracking_parameters_model: BaseTrackingParams = MediapipeTrackingParams()
     anipose_triangulate_3d_parameters_model: AniposeTriangulate3DParametersModel = AniposeTriangulate3DParametersModel()
+    depth_fusion_parameters_model: DepthFusionParametersModel = DepthFusionParametersModel()
     post_processing_parameters_model: PostProcessingParametersModel = PostProcessingParametersModel()
     tracking_model_info: ModelInfo = MediapipeModelInfo()

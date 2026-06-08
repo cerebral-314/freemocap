@@ -161,3 +161,4 @@ dist-electron/
 */.claude/*
 *.vite/
 /.run
+/MocapCam/.build

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://freemocap.org/schemas/mocapcam/frame_manifest.schema.json",
+  "title": "MocapCam RGB-D Frame Manifest",
+  "type": "object",
+  "required": ["session_id", "devices"],
+  "properties": {
+    "session_id": { "type": "string" },
+    "devices": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["video_frame_count", "depth_frame_count", "raw_manifest"],
+        "properties": {
+          "status": { "type": "object" },
+          "video_frame_count": { "type": "integer", "minimum": 0 },
+          "depth_frame_count": { "type": "integer", "minimum": 0 },
+          "raw_manifest": { "type": "string" },
+          "synchronized_video": { "type": "string" }
+        }
+      }
+    },
+    "recording_events": {
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  }
+}

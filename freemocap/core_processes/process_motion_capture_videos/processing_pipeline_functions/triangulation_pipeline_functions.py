@@ -12,6 +12,11 @@ from freemocap.core_processes.capture_volume_calibration.save_3d_data_to_npy imp
     save_3d_data_to_npy,
 )
 from freemocap.core_processes.capture_volume_calibration.triangulate_3d_data import triangulate_3d_data
+from freemocap.core_processes.capture_volume_calibration.rgbd_depth_fusion import (
+    DepthFusionSettings,
+    load_depth_observations,
+    refine_3d_with_depth,
+)
 from freemocap.core_processes.post_process_skeleton_data.process_single_camera_skeleton_data import (
     process_single_camera_skeleton_data,
 )
@@ -100,5 +105,33 @@ def get_triangulated_data(
             weights_filepath = Path(processing_parameters.recording_info_model.raw_data_folder_path) / weights_filename
             logger.info(f"Saving normalized camera weights to {weights_filepath}")
             np.save(weights_filepath, normalized_camera_weights)
+
+        depth_fusion_parameters = processing_parameters.depth_fusion_parameters_model
+        if depth_fusion_parameters.use_depth_fusion:
+            observations = load_depth_observations(processing_parameters.recording_info_model.raw_data_folder_path)
+            if observations is None:
+                logger.info("Depth fusion enabled, but no rgbd_depth_observations.npz file was found")
+            else:
+                logger.info("Refining triangulated 3D data with RGB-D observations...")
+                depth_points_frame_marker_xyz, depth_valid_frame_marker = observations
+                refined_skel3d_frame_marker_xyz, depth_diagnostics = refine_3d_with_depth(
+                    triangulated_frame_marker_xyz=skel3d_frame_marker_xyz,
+                    depth_points_frame_marker_xyz=depth_points_frame_marker_xyz,
+                    depth_valid_frame_marker=depth_valid_frame_marker,
+                    settings=DepthFusionSettings(
+                        use_depth_fusion=depth_fusion_parameters.use_depth_fusion,
+                        depth_weight=depth_fusion_parameters.depth_weight,
+                        max_depth_joint_distance_m=depth_fusion_parameters.max_depth_joint_distance_m,
+                    ),
+                )
+                raw_data_folder_path = Path(processing_parameters.recording_info_model.raw_data_folder_path)
+                refined_file_path = raw_data_folder_path / f"{processing_parameters.tracking_model_info.name}_rgbd_refined_raw_3d_data.npy"
+                diagnostics_file_path = raw_data_folder_path / f"{processing_parameters.tracking_model_info.name}_rgbd_depth_fusion_diagnostics.npy"
+                logger.info(f"Saving RGB-D refined 3D data to {refined_file_path}")
+                np.save(refined_file_path, refined_skel3d_frame_marker_xyz)
+                if depth_fusion_parameters.save_rgbd_diagnostics:
+                    np.save(diagnostics_file_path, depth_diagnostics)
+                if depth_fusion_parameters.replace_triangulated_with_refined:
+                    skel3d_frame_marker_xyz = refined_skel3d_frame_marker_xyz
 
     return skel3d_frame_marker_xyz

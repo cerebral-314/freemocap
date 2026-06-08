@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://freemocap.org/schemas/mocapcam/device_metadata.schema.json",
+  "title": "MocapCam Device Metadata",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "required": ["device_id", "role", "intrinsics_source", "recording_mode"],
+    "properties": {
+      "device_id": { "type": "string" },
+      "role": { "const": "camera" },
+      "rgb_resolution": {
+        "type": "array",
+        "items": { "type": "integer", "minimum": 1 },
+        "minItems": 2,
+        "maxItems": 2
+      },
+      "rgb_fps": { "type": "number", "minimum": 0 },
+      "depth_resolution": {
+        "type": "array",
+        "items": { "type": "integer", "minimum": 1 },
+        "minItems": 2,
+        "maxItems": 2
+      },
+      "depth_fps": { "type": "number", "minimum": 0 },
+      "camera_position_hint": { "type": "string" },
+      "camera_settings": { "type": ["object", "null"] },
+      "supported_camera_settings": { "type": ["object", "null"] },
+      "intrinsics_source": { "type": "string" },
+      "recording_mode": { "type": "string" },
+      "last_status": { "type": "object" }
+    }
+  }
+}
